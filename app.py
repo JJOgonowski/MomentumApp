@@ -96,8 +96,8 @@ def _gh_list_files() -> list[str]:
     r.raise_for_status()
     return []
 
-def _gh_write_file(filename: str, content_str: str) -> bool:
-    """Utwórz lub nadpisz plik na GitHub. Zwraca True przy sukcesie."""
+def _gh_write_file(filename: str, content_str: str) -> tuple[bool, str | None]:
+    """Utwórz lub nadpisz plik na GitHub. Zwraca (ok, error_msg)."""
     encoded = base64.b64encode(content_str.encode("utf-8")).decode()
     existing = _gh_get_file_info(filename)
     payload: dict = {
@@ -113,7 +113,14 @@ def _gh_write_file(filename: str, content_str: str) -> bool:
         json=payload,
         timeout=15
     )
-    return r.status_code in (200, 201)
+    if r.status_code in (200, 201):
+        return True, None
+    try:
+        details = r.json()
+        message = details.get("message")
+    except Exception:
+        message = r.text
+    return False, f"HTTP {r.status_code}: {message}"
 
 def _gh_read_file(filename: str) -> str | None:
     """Pobierz zawartość pliku z GitHub jako string (None jeśli błąd)"""
@@ -199,11 +206,11 @@ def save_scenario_to_file(name: str, scenario_data: dict) -> bool:
         filename = f"{safe_name}.json"
         content  = _serialize_scenario(scenario_data)
         if _gh_enabled():
-            ok = _gh_write_file(filename, content)
+            ok, err = _gh_write_file(filename, content)
             if ok:
                 list_scenarios.clear()
             else:
-                st.error("❌ Błąd zapisu na GitHub — sprawdź token i uprawnienia repozytorium")
+                st.error(f"❌ Błąd zapisu na GitHub — {err}")
             return ok
         else:
             filepath = SCENARIOS_DIR / filename
