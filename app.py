@@ -54,8 +54,9 @@ def _gh_enabled() -> bool:
         return False
 
 def _gh_headers() -> dict:
+    token = st.secrets['github']['token']
     return {
-        "Authorization": f"Bearer {st.secrets['github']['token']}",
+        "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
