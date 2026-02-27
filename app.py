@@ -108,9 +108,14 @@ def _gh_write_file(filename: str, content_str: str) -> tuple[bool, str | None]:
     }
     if existing and "sha" in existing:
         payload["sha"] = existing["sha"]
+    
+    url = f"{_gh_base_url()}/{filename}"
+    headers = _gh_headers()
+    token_preview = headers.get("Authorization", "")[:20]
+    
     r = requests.put(
-        f"{_gh_base_url()}/{filename}",
-        headers=_gh_headers(),
+        url,
+        headers=headers,
         json=payload,
         timeout=15
     )
@@ -121,7 +126,8 @@ def _gh_write_file(filename: str, content_str: str) -> tuple[bool, str | None]:
         message = details.get("message")
     except Exception:
         message = r.text
-    return False, f"HTTP {r.status_code}: {message}"
+    debug_info = f"URL: {url} | Token: {token_preview}... | Status: {r.status_code}"
+    return False, f"{message}\n({debug_info})"
 
 def _gh_read_file(filename: str) -> str | None:
     """Pobierz zawartość pliku z GitHub jako string (None jeśli błąd)"""
