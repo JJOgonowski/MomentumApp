@@ -1,7 +1,0 @@
-streamlit>=1.54.0
-yfinance>=1.2.0
-pandas>=2.3.0
-numpy>=2.4.0
-plotly>=6.5.0
-requests>=2.32.0
-matplotlib>=3.9.0
